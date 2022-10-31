@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+function uninstall {
+  "$( dirname "${BASH_SOURCE[0]}" )/install" --uninstall
+}
+
+uninstall "$@"

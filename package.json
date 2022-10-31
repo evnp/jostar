@@ -1,0 +1,25 @@
+{
+  "name": "jostar",
+  "version": "0.0.1",
+  "description": "A minimalist personal knowledge wrangler.",
+  "main": "jostar",
+  "files": [
+    "jostar"
+  ],
+  "bin": {
+    "jot": "jostar"
+  },
+  "scripts": {
+    "lint": "shellcheck jostar"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/evnp/jostar.git"
+  },
+  "homepage": "https://jostar.dev",
+  "author": "Evan Purcer <evanpurcer@gmail.com> (http://evnp.ca)",
+  "license": "MIT",
+  "devDependencies": {
+    "shellcheck": "1.1.0"
+  }
+}

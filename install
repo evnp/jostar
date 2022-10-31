@@ -1,0 +1,88 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+function bold() {
+  echo "$( tput bold )$1$( tput sgr0 )"
+}
+
+function confirm() {
+  echo "Will run: $( bold "$1" )"
+  read -r -p "Run command? [Y/n] " response
+  response="$( echo "${response}" | tr '[:upper:]' '[:lower:]' )"
+  if ! [[ "$response" == "" || "$response" =~ ^(yes|y)$ ]]; then
+    echo "Uninstall cancelled."
+    exit 0
+  fi
+}
+
+function bins() {
+  echo "$PATH" | tr : '\n' | grep bin | grep -vE '^/bin$' | sed "s;$HOME;~;" | \
+    awk '{ print length, $0 }' | sort -n -s | cut -d" " -f2- | nl -w2 -s' · '
+}
+
+function install {
+  local uninstall=false
+  if [[ "${1:-}" == "-u" || "${1:-}" == "--uninstall" || "${1:-}" == "-uninstall" ]]; then
+    uninstall=true
+    shift
+  fi
+
+  local jocmd="j"
+  if [[ -n "${2:-}" ]]; then
+    jocmd="${2:-}"
+  fi
+
+  local bin
+  if [[ "${uninstall}" == true ]]; then
+    bold "Please select a bin directory from your path from which to uninstall jo*"
+  else
+    bold "Please select a bin directory from your path in which to install jo*"
+  fi
+  bold "Enter the number corresponding with the desired directory,"
+  bold "OR enter a full path to another directory to install there"
+  bold "OR press enter with no input to select first path in list:"
+  bins
+  local prompt
+  local default
+  default="$( bins | head -1 | sed -e "s;^.*· ;;" )"
+  prompt="$( bold "Enter number, path, or press ENTER to select '${default}' > " )"
+  printf '%s' "${prompt}"
+  read -rp "" bin
+
+  # get bin option from provided number:
+  if [[ "${bin}" =~ ^[0-9]+$ ]]; then
+    bin="$( bins | awk "NR == ${bin}" | sed -e "s;^.*· ;;" )"
+  elif [[ "${bin}" == "" ]]; then
+    bin="${default}"
+  fi
+  bin="${bin/\~/$HOME}"
+
+  if [[ -z "${bin}" ]]; then
+    bold "No BIN directory provided"
+    exit 1
+  elif ! [[ -d "${bin}" ]]; then
+    bold "Invalid BIN directory provided (you provided '${bin}', not a directory)"
+    exit 1
+  fi
+
+  if [[ "${uninstall}" == true ]]; then
+    # uninstall jo* from the chosen bin directory:
+    confirm "rm ${bin}/${jocmd}"
+    rm "${bin}/${jocmd}"
+    echo
+    bold "jo* was successfully uninstalled from '${bin}'."
+    echo "Remember to remove any jo* aliases from your shell rc files if you have them."
+    echo "Thanks for trying out jo* -- if you have any feedback it's always appreciated."
+    echo "Please open an issue with any topic at https://github.com/evnp/jostar/issues"
+    echo
+  else
+    # install jo* under provided command (default: 'j'):
+    cp "$( dirname "${BASH_SOURCE[0]}" )/jostar" "${bin}/${jocmd}"
+    echo
+    bold "jo* was successfully installed under '${bin}/${jocmd}'"
+    bold "Run '${jocmd} -h' to get started."
+    echo
+  fi
+}
+
+install "$@"
